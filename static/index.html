@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- tailwind cdn. not the best choice for production to use cdn -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- htmx script -->
+    <script src="https://unpkg.com/htmx.org@1.9.3" integrity="sha384-lVb3Rd/Ca0AxaoZg5sACe8FJKF0tnUgR2Kd7ehUOG5GCcROv5uBIZsOqovBAcWua" crossorigin="anonymous"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/autosize.js/4.0.2/autosize.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/base16/outrun-dark.min.css" integrity="sha512-mHzgaMNkPwTdTaIBNHQ1aqtUrXh4F7T09Zo/dbBAZIyKQkH8ri/ysLUHB2kDGVM0ANPIQrPRj+xrg/CxIQ0T+Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+
+    <link rel="stylesheet" href="style.css">
+    <title>Htmx + Tailwind Chat App</title>
+</head>
+<body class="h-full w-full p-0 m-0" hx-trigger="load" hx-get="load_history_on_page_load" hx-target=".chat-history" hx-swap="afterbegin">
+    <div class="main-container flex h-screen bg-gray-800">
+      <div class="sidebar scrollbar flex flex-col items-center bg-gray-700 w-1/5 px-2 py-2 overflow-y-auto hidden sm:flex">
+      <button class="btn-new-chat px-4 py-2 w-full rounded-sm border border-gray-500 transition duration-300 ease-in-out hover:bg-gray-500 text-white"        
+        hx-get="clear_chat" 
+        hx-target=".messages"
+        hx-swap="outerHTML">New Chat</button>
+      <div class="chat-history w-full flex flex-col items-center px-2 py-2">
+        <!-- new buttons for new chats go here -->
+      </div>
+
+      </div>
+
+      <div class="chat-box flex-1 bg-gray-800 flex flex-col m-3 md:mx-20 ">
+
+          <div class="scrollbar flex-grow overflow-y-auto">
+            <div class="messages " >
+                <!-- conversation goes here -->
+            </div>
+            <img id="indicator" class="htmx-indicator px-2 py-2" src="puff.svg" alt="">
+        </div>
+
+          <form class="flex items-center border-t border-gray-700 py-2 px-4"
+              hx-post="/new_chat" 
+              hx-target=".messages"
+              hx-indicator="#indicator"
+              hx-swap="beforeend"
+              hx-on='htmx:afterOnLoad="clearInput()"'>
+              
+              <textarea id="message-input" 
+                        class="scrollbar flex-1 bg-gray-900 rounded-lg py-2 px-4 mr-2 text-white resize-none focus:outline-none overflow-hidden overflow-y-auto max-h-28" 
+                        placeholder="Type your message..."
+                        name="message"></textarea>
+        
+              <button class="bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 px-4 focus:outline-none">Send</button>
+        </form>
+  
+      </div>     
+      
+    </div>
+
+  <script>
+    autosize(document.getElementById("message-input"));
+  
+    // This is your function that actually performs the scroll operation
+    function scrollToBottom() {
+
+      console.log("afterSwap fired")
+      var element = document.querySelector(".messages");
+      element.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+    }
+  
+    document.getElementById('message-input').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        // Trigger HTMX request
+        htmx.trigger(this.form, 'submit');
+        // Clear the input
+        this.value = '';
+      }
+    });
+  
+    // This is the event listener that triggers the scroll operation
+    // when the .messages element is updated by HTMX.
+    document.querySelector(".messages").addEventListener('htmx:afterSwap', function() {
+    scrollToBottom();
+    hljs.highlightAll();
+});
+  
+    function clearInput() {
+        document.getElementById('message-input').value = '';
+    }
+  </script>
+</body>  
+</html>
